@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/layoutConnected"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginHorizontal="5dp"
+    android:background="@drawable/custom_edt"
+    android:backgroundTint="@color/blur_black">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imgConnected"
+        android:layout_marginStart="5dp"
+        android:src="@drawable/bluetooth_disconnected"
+        android:layout_gravity="center" />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="10dp"
+        android:layout_gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtDeviceConnect"
+            android:text="Redmi 8"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/txtDeviceMAC"
+            android:text="44:00:10:CE:21:AE"/>
+    </LinearLayout>
+
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/pbConnect"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:id="@+id/btnConnect"
+        android:backgroundTint="@color/light_blue"
+        android:text="Kết nối"
+        android:layout_gravity="center"
+        android:layout_marginEnd="5dp"
+        android:visibility="visible"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtDeviceStatus"
+        android:text="Đã kết nối"
+        android:textColor="@color/black"
+        android:layout_marginEnd="5dp"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+</LinearLayout>

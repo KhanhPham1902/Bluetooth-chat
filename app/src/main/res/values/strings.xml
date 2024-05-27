@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BluetoothChat</string>
+    <string name="bluetooth_off">Chưa kết nối bluetooth, nhấn vào nút để bắt đầu kết nối</string>
+    <string name="bluetooth_on">Đã bật nhưng chưa kết nối với thiết bị, nhấn nút để thiết lập kết nối</string>
+    <string name="bluetooth_connected">Đã kết nối</string>
+    <string name="bluetooth_permission">Hãy cấp quyền sử dụng kết nối bluetooth</string>
+    <string name="phone_book">Danh bạ</string>
+</resources>
