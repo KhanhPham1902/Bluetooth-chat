@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +21,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.srf.bluetoothchat.R;
+import com.srf.bluetoothchat.activity.LoginActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +35,7 @@ public class AvailableAdapter extends RecyclerView.Adapter<AvailableAdapter.View
     private ArrayList<BluetoothDevice> deviceArrayList;
     private ArrayList<Boolean> deviceBondedStates;
     private static final int REQUEST_BLUETOOTH_CONNECT = 1;
+    private BroadcastReceiver pairingReceiver;
     private boolean isReceiverRegistered = false;
 
     public AvailableAdapter(Context context, ArrayList<BluetoothDevice> deviceArrayList) {
@@ -39,6 +43,45 @@ public class AvailableAdapter extends RecyclerView.Adapter<AvailableAdapter.View
         this.deviceArrayList = deviceArrayList;
         this.deviceBondedStates = new ArrayList<>(Collections.nCopies(deviceArrayList.size(), false));
         registerReceiver();
+    }
+
+    private void registerReceiver() {
+        pairingReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                    final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                    final int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+                    if (state == BluetoothDevice.BOND_BONDED) {
+                        // Ket noi voi thiet bi thanh cong
+                        Toast.makeText(context, "Kết nối thành công", Toast.LENGTH_SHORT).show();
+                        updateBondedDevice(device, true);
+                        // Chuyen sang cua so dang nhap tai khoan
+                        Intent connectedIntent = new Intent(context, LoginActivity.class);
+                        connectedIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(connectedIntent);
+                    } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDING) {
+                        // Ket noi that bai
+                        Toast.makeText(context, "Kết nối thất bại", Toast.LENGTH_SHORT).show();
+                        updateBondedDevice(device, false);
+                    }
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        context.registerReceiver(pairingReceiver, filter);
+        isReceiverRegistered = true;
+    }
+
+    private void updateBondedDevice(BluetoothDevice device, boolean isBonded) {
+        int position = deviceArrayList.indexOf(device);
+        if (position >= 0 && position < deviceBondedStates.size()) {
+            deviceBondedStates.set(position, isBonded);
+            notifyItemChanged(position);
+        }
     }
 
     @NonNull
@@ -56,8 +99,6 @@ public class AvailableAdapter extends RecyclerView.Adapter<AvailableAdapter.View
             ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADMIN}, REQUEST_BLUETOOTH_CONNECT);
             return;
         }
-        boolean isConnected = deviceBondedStates.size() > position && deviceBondedStates.get(position);
-        holder.updateBondedState(isConnected);
 
         holder.txtDeviceAvailable.setText(device.getName());
         holder.txtAvailableMAC.setText(device.getAddress());
@@ -76,36 +117,15 @@ public class AvailableAdapter extends RecyclerView.Adapter<AvailableAdapter.View
         return deviceArrayList.size();
     }
 
-    private final BroadcastReceiver bondStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                notifyConnectedDevice(device);
-            }
-        }
-    };
-
-    private void notifyConnectedDevice(BluetoothDevice device) {
-        int position = deviceArrayList.indexOf(device);
-        if (position >= 0 && position < deviceBondedStates.size()) {
-            deviceBondedStates.set(position, true);
-            notifyItemChanged(position);
-        }
-    }
-
-    private void registerReceiver() {
-        if (!isReceiverRegistered) {
-            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
-            context.registerReceiver(bondStateReceiver, filter);
-            isReceiverRegistered = true;
-        }
+    @Override
+    public void onViewDetachedFromWindow(@NonNull ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        unregisterReceiver();
     }
 
     private void unregisterReceiver() {
         if (isReceiverRegistered) {
-            context.unregisterReceiver(bondStateReceiver);
+            context.unregisterReceiver(pairingReceiver);
             isReceiverRegistered = false;
         }
     }
@@ -127,27 +147,5 @@ public class AvailableAdapter extends RecyclerView.Adapter<AvailableAdapter.View
             pbAvailable = itemView.findViewById(R.id.pbAvailable);
             layoutAvailable = itemView.findViewById(R.id.layoutAvailable);
         }
-
-        public void updateBondedState(boolean bonded) {
-            if (bonded) {
-                btnAvailable.setVisibility(View.GONE);
-                pbAvailable.setVisibility(View.GONE);
-                txtAvailableStatus.setVisibility(View.VISIBLE);
-                imgAvailable.setImageResource(R.drawable.bluetooth_connected);
-                layoutAvailable.setBackgroundResource(R.color.connected);
-            } else {
-                btnAvailable.setVisibility(View.VISIBLE);
-                pbAvailable.setVisibility(View.GONE);
-                txtAvailableStatus.setVisibility(View.GONE);
-                imgAvailable.setImageResource(R.drawable.bluetooth_disconnected);
-                layoutAvailable.setBackgroundResource(R.color.blur_black);
-            }
-        }
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(@NonNull ViewHolder holder) {
-        super.onViewDetachedFromWindow(holder);
-        unregisterReceiver();
     }
 }
